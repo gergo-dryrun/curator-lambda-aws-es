@@ -108,7 +108,7 @@ def run_curator(cluster_config):
 
 def download_config():
     config_location = os.environ['CONFIG_LOCATION']
-    bucket_name, config_path = config_location.split('s3://')[1].split('/', 1)
+    bucket_name, config_path = config_location.split('/', 1)
     s3 = boto3.resource('s3')
     object = s3.Object(bucket_name, config_path)
     config = yaml.load(object.get()['Body'].read())

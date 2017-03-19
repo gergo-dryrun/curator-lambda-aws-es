@@ -1,13 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
 Description: 'Creates curator lambda.'
 
 Parameters:
   ConfigLocation:
-    Description: S3 bucket location for curator_config.yaml. Format s3://<bucket>/<file>
+    Description: S3 bucket location for curator_config.yaml. Format <bucket>/<file>
     Type: String
     MinLength: 1
     MaxLength: 255
-    Default: s3://<bucket>/<file>
+    Default: <bucket>/<file>
   CronSchedule:
     Description: Cron schedule when curator should run
     Type: String
@@ -39,6 +40,26 @@ Resources:
         Statement:
           -
             Effect: Allow
+            Action:
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+            Resource: arn:aws:s3:::*
+          -
+            Effect: Allow
+            Action: s3:ListBucket
+            Resource:
+              Fn::Sub:
+                - arn:aws:s3:::${BucketName}
+                - BucketName:
+                    Fn::Select:
+                      - 0
+                      - Fn::Split: ['/', !Ref ConfigLocation]
+          -
+            Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub arn:aws:s3:::${ConfigLocation}
+          -
+            Effect: Allow
             Action: es:ESHttp*
             Resource:
               !Sub |-
@@ -62,26 +83,20 @@ Resources:
         -
           !Ref LambdaExecutionerRole
 
-#      Environment:
-#        Variables:
-#          ES_ENDPOINT: !Ref ElasticSearchDomainEndpoint
-#          INDEX_PREFIX: !Ref IndexPrefix
-#          RETENTION: !Ref RetentionPeriod
-
-    ScheduledFunction:
-      Type: AWS::Serverless::Function
-      Properties:
-        FunctionName: aws-elasticsearch-curator
-        Handler: curator_lambda.lambda_handler
-        Runtime: python2.7
-        CodeUri: s3://dryrun.cloud-resources/2017-03-19-Curator-lambda-for-ElasticSearch-51/curator_lambda.zip
-        Timeout: 300
-        Role: !GetAtt LambdaExecutionerRole.Arn
-        Environment:
-          Variables:
-            CONFIG_LOCATION: !Ref ConfigLocation
-        Events:
-          Timer:
-            Type: Schedule
-            Properties:
-              Schedule: !Ref CronSchedule
+  ScheduledFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: aws-elasticsearch-curator
+      Handler: curator_lambda.lambda_handler
+      Runtime: python2.7
+      CodeUri: s3://dryrun.cloud-resources/2017-03-19-Curator-lambda-for-ElasticSearch-51/curator_lambda.zip
+      Timeout: 300
+      Role: !GetAtt LambdaExecutionerRole.Arn
+      Environment:
+        Variables:
+          CONFIG_LOCATION: !Ref ConfigLocation
+      Events:
+        Timer:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref CronSchedule
