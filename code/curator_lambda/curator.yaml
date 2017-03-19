@@ -1,0 +1,14 @@
+---
+- name: example logging cluster
+  endpoint: search-domain-logstash-vnojmawsc.us-west-1.es.amazonaws.com
+  indices:
+    - prefix: logstash-
+      days: 365
+
+- name: example metrics cluster
+  endpoint: search-domain-metrics-vnojmawsc.us-west-1.es.amazonaws.com
+  indices:
+    - prefix: metricbeat-
+      days: 14
+    - prefix: packetbeat-
+      days: 14

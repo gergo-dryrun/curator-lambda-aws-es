@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creates curator lambda.'
+
+Parameters:
+  ConfigLocation:
+    Description: S3 bucket location for curator_config.yaml. Format s3://<bucket>/<file>
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    Default: s3://<bucket>/<file>
+  CronSchedule:
+    Description: Cron schedule when curator should run
+    Type: String
+    Default: cron(0 2 * * ? *)
+
+Resources:
+
+  LambdaExecutionerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+
+  LambdaRolePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: es-http-permissions
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action: es:ESHttp*
+            Resource:
+              !Sub |-
+                arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/*
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+            Resource:
+              !Sub |-
+                arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              !Sub |-
+                arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/aws-elasticsearch-curator:*
+      Roles:
+        -
+          !Ref LambdaExecutionerRole
+
+#      Environment:
+#        Variables:
+#          ES_ENDPOINT: !Ref ElasticSearchDomainEndpoint
+#          INDEX_PREFIX: !Ref IndexPrefix
+#          RETENTION: !Ref RetentionPeriod
+
+    ScheduledFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        FunctionName: aws-elasticsearch-curator
+        Handler: curator_lambda.lambda_handler
+        Runtime: python2.7
+        CodeUri: s3://dryrun.cloud-resources/2017-03-19-Curator-lambda-for-ElasticSearch-51/curator_lambda.zip
+        Timeout: 300
+        Role: !GetAtt LambdaExecutionerRole.Arn
+        Environment:
+          Variables:
+            CONFIG_LOCATION: !Ref ConfigLocation
+        Events:
+          Timer:
+            Type: Schedule
+            Properties:
+              Schedule: !Ref CronSchedule

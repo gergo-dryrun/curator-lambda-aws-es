@@ -1,0 +1,5 @@
+certifi>=2016.09.26
+elasticsearch-curator==4.2.6
+elasticsearch>=5.0.0,<6.0.0
+aws-requests-auth==0.3.0
+PyYAML==3.11
