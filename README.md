@@ -4,11 +4,10 @@ Inspired by [the post from elastic](https://www.elastic.co/blog/serverless-elast
 
 Deploys a lambda function to run curator on a scheduled basis.
 
-###### Curator config
 
-Create a configuration file for your ElasticSearch domains and uploaded it to s3.
+### Curator config
 
-Sample curator.yaml
+Create a yaml configuration file for your ElasticSearch domains and upload it to s3.
 
 ```yaml
 ---
@@ -27,7 +26,8 @@ Sample curator.yaml
       days: 14
 ```
 
-Launch stack
+After you have uploaded the configuration file you can launch the stack
+
 
 [<img src="https://s3-eu-west-1.amazonaws.com/quickstart-cloudtrail-to-elasticsearch/cloudformation-launch-stack.png">](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=elasticsearch-curator&templateURL=https://s3-eu-west-1.amazonaws.com/dryrun.cloud-resources/2017-03-19-Curator-lambda-for-ElasticSearch-51/curator_lambda.template)
 
